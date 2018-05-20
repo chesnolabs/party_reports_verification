@@ -8,8 +8,8 @@ import tablib
 from pib_regexp import *
 
 
-NAME_COL = 3  # номер стовпця, який відповідає за імена
 NAME_COL_TITLE = 'ПІБ (для фіз. осіб)/Назва (для юр. осіб)'
+NAME_COL_PERSONTYPE = set(('Тип власника', 'Тип внескодавця', 'Тип бенефіціара', 'Тип особи'))
 
 # правильні написання імен
 CORRECT_GIVEN = [line.rstrip(",\n") for line in open('correct_given.csv')]
@@ -46,9 +46,9 @@ def open_file(file):
 def substitution(imported_file):
     '''
     '''
-    if imported_file.headers[NAME_COL] != NAME_COL_TITLE:
-        log.error('Неспівпадіння заголовку! Пропуск перевірки.')
-        return imported_file
+    name_col = imported_file.headers.index(NAME_COL_TITLE)  # номер стовпця, який відповідає за імена
+    person_type_col_title = NAME_COL_PERSONTYPE.intersection(imported_file.headers).pop()
+    person_type_col_title_index = imported_file.headers.index(person_type_col_title)
 
     # створюємо новий датасет, додаємо в нього заголовки з імпортованого файла
     new_data = tablib.Dataset()
@@ -58,9 +58,9 @@ def substitution(imported_file):
     for row_index in range(imported_file.height):
         row = list(imported_file[row_index])
 
-        if row[8] == 'фізична особа':
+        if row[person_type_col_title_index] in ('фізична особа', 'ФОП'):
             # типові автозаміни
-            full_name = standard_name_cleaner(row[NAME_COL])
+            full_name = standard_name_cleaner(row[name_col])
 
             # якщо все імʼя у верхньому регістрі - написання з великої
             if full_name.upper() == full_name:
@@ -78,7 +78,7 @@ def substitution(imported_file):
                 split_name['middle_name'], row_index)
 
             # об'єднання ПІБ для запису у файл
-            row[NAME_COL] = \
+            row[name_col] = \
                 ' '.join(filter(None, (family_name, given_name, middle_name)))
         # додаємо результат у новий датасет
         new_data.append(row)
@@ -132,7 +132,7 @@ def verify_given_name(given_name, row_index):
         if given_name in SUBSTITUTIONS_GIVEN:
             given_name = SUBSTITUTIONS_GIVEN[given_name]
         elif given_name in RU_GIVEN:
-            log.err(
+            log.error(
                 '{0}:{1} Необхідний переклад усього імені: "{2}"'
                 .format(sys.argv[1], row_index, given_name))
         else:
@@ -151,7 +151,7 @@ def verify_middle_name(middle_name, row_index):
         if middle_name in SUBSTITUTIONS_MIDDLE:
             middle_name = SUBSTITUTIONS_MIDDLE[middle_name]
         elif middle_name in RU_MIDDLE:
-            log.err(
+            log.error(
                 '{0}:{1} Необхідний переклад усього імені: {2}'
                 .format(sys.argv[1], row_index, middle_name))
         else:
