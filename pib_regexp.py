@@ -4,6 +4,7 @@ import re
 
 PERSON_NAME_RE = re.compile(
     r'''
+    (?P<fop>ФОП\s+)?
     (?P<family_name>[\w\-\'ʼ]+)
     \s+
     (?P<maiden_name>\([\w\-\'ʼ]*\)\s+)?
@@ -56,7 +57,6 @@ REPLACEMENTS_UK = dict(
     (re.escape(k), v) for k, v in REPLACEMENTS_UK.items())
 REPLACEMENTS_UK_PATTERN = re.compile("|".join(REPLACEMENTS_UK.keys()))
 
-FOP_RE = re.compile(r'^ФОП\s+')
 MULTISPACED_RE = re.compile(' +')
 
 def match_name_parts(full_name): #функція з парсингу ПІБ на складові
@@ -73,7 +73,7 @@ def clean_field(value):
         return value.strip()
     return value
 
-def standard_name_cleaner(name, return_dict=False): #автозаміна помилок при розпізнаванні
+def standard_name_cleaner(name, return_dict=False, remove_fop=True):
         name = clean_field(name)\
             .replace(',', '')\
             .replace('.', ' ')\
@@ -83,12 +83,14 @@ def standard_name_cleaner(name, return_dict=False): #автозаміна пом
             .replace('3', 'З')\
             .replace('!', 'І')\
             .strip()
-        name = FOP_RE.sub('', name)
         name = MULTISPACED_RE.sub(' ', name)
         name_parts = match_name_parts(name)
         if return_dict:
             return name_parts
+        if remove_fop:
+            name_parts['fop'] = None
         return " ".join(filter(None, (
+            name_parts['fop'],
             name_parts['family_name'],
             name_parts['given_name'],
             name_parts['middle_name'])))\

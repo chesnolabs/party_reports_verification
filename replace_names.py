@@ -60,7 +60,7 @@ def substitution(imported_file):
 
         if row[person_type_col_title_index] in ('фізична особа', 'ФОП'):
             # типові автозаміни
-            full_name = standard_name_cleaner(row[name_col])
+            full_name = standard_name_cleaner(row[name_col], remove_fop=False)
 
             # якщо все імʼя у верхньому регістрі - написання з великої
             if full_name.upper() == full_name:
