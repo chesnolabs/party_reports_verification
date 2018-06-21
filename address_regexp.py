@@ -27,12 +27,13 @@ REPLACEMENTS = (
     PUNCTUATION_FIX,
     REPEATING_PUNCTUATION_FIX,  # TODO: спробувати оптимізувати
     (icompile(r'\bУкраїна\b'), ''),
-    (icompile(r'([^\d])?\b\d{5}\b([^\d])?'), r'\1\2'),  # поштовий індекс
+    (icompile(r'\b\d{5}\b'), ''),  # поштовий індекс
     VOIDS_REMOVAL,
     (re.compile(  # заміна апострофів
         r'([Є-ЯҐа-їґ])([\'`’])([Є-ЯҐа-їґ])'),
         r'\1ʼ\3'),
-    (icompile(r'\b(о6л|оОл)\b'), r'обл'),
+    (icompile(r'\b(о6л|оОл|о бл)\b'), r'обл'),
+    (icompile(r'\b(в\\л)\b'), r'вул'),
     (icompile(r'\b(р\-?нс)\b'), r'р-н, с'),
     (re.compile(r'\b(Оуд)\b'), r'буд'),
     (re.compile(r'([Є-ЯҐа-їґ])([0-9])'), r'\1 \2'),  # цифра одразу за буквою
@@ -72,7 +73,9 @@ REPLACEMENTS = (
     (re.compile(  # написання букв у номері будинку після дробу
         r'(, буд. [0-9]+[Є-ЯҐ]?/[0-9]+)\-?([Є-ЯҐа-їґ])'),
         lambda matched: matched.group(1) + matched.group(2).upper()),
-    (re.compile(r'([0-9])\\|\|([0-9])'), r'\1/\2'),  # дріб у номері через косу
+    (re.compile(r'([0-9])(?:\\|\|)([0-9])'), r'\1/\2'),  # дріб у номері
+    # (re.compile(r'([а-їґ])\s([а-їґ])\s'), r'\1\2 '),  # ! 'приміщення з'
+    (re.compile(r'([а-їґ])\s(ий|ка)\s'), r'\1\2 '),
     REPEATING_PUNCTUATION_FIX,
     PUNCTUATION_FIX,
 )
@@ -120,6 +123,9 @@ TYPE_WORDS = {
 
 
 def address_set(address, lowercase=True):
+    '''
+    Перетворення адреси у множину суттєвих елементів
+    '''
     if lowercase:
         address = address.lower()
     words_list = re.split(' ', apply_replacement_rule(SET_CLEANER, address))
@@ -128,6 +134,6 @@ def address_set(address, lowercase=True):
         if re.search('[0-9]', word):
             words_set.add(word)
         else:
-            if len(word) > 3:
+            if len(word) > 3:  # FIXME: 'м. Бар', 'Ш. Лан'
                 words_set.add(word)
     return words_set - TYPE_WORDS
