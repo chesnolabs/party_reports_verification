@@ -126,10 +126,12 @@ def address_set(address, lowercase=True):
     '''
     Перетворення адреси у множину суттєвих елементів
     '''
+    words_set = set()
+    if not address:
+        return words_set
     if lowercase:
         address = address.lower()
     words_list = re.split(' ', apply_replacement_rule(SET_CLEANER, address))
-    words_set = set()
     for word in words_list:
         if re.search('[0-9]', word):
             words_set.add(word)
