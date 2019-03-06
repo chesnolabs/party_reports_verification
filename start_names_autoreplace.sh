@@ -3,7 +3,7 @@
 folder_name="$1"
 
 DIR=$(dirname "$(readlink -f "$0")")
-source "${DIR}venv/bin/activate"
+source "${DIR}/venv/bin/activate"
 
 find "$folder_name" -type f -name 2_realty.csv -exec python3 replace_names.py "{}" \;
 find "$folder_name" -type f -name 3_vehicles.csv -exec python3 replace_names.py "{}" \;
